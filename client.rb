@@ -13,8 +13,8 @@ class Client
     @uuid_gen = Cql::TimeUuid::Generator.new
   end
 
-  def write_event stream, event_type, event_body
-    uuid = new_uuid
+  def write_event stream, event_type, event_body, uuid=nil
+    uuid ||= new_uuid
     json_body = event_body.to_json
     response = self.class.post url_for(stream), {
       body: json_body,
