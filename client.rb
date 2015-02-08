@@ -5,6 +5,9 @@ require 'feedjira'
 require 'persistent_httparty'
 
 class Client
+  include HTTParty
+  persistent_connection_adapter
+
   def initialize conn_string
     @conn_string = conn_string
     @uuid_gen = Cql::TimeUuid::Generator.new
