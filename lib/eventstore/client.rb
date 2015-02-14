@@ -30,9 +30,15 @@ module EventStore
       [uuid, response]
     end
 
-    def read_events stream, read_count=20
+    def read_events stream, read_until=20
       stream = Stream.new url_for stream
-      stream.events.take(read_count)
+      if read_until.is_a?(Fixnum)
+        stream.events.take(read_until)
+      else
+        stream.events.take_while do |event|
+          event[:id] != read_until
+        end
+      end
     end
 
     private
@@ -58,12 +64,12 @@ module EventStore
           feed.entries.each do |entry|
             yielder << { body: fetch_event_body(entry.url),
               type: entry.summary,
-              updated: entry.updated
+              updated: entry.updated,
+              id: entry.id
             }
           end
           @page_url = feed.next_href
         end
-        puts "STOPPING"
       end
     end
     private
@@ -78,15 +84,14 @@ module EventStore
       )
     end
   end
+end
 
-
-  module Feedjira
-    module Parser
-      class Atom
-        element :"link", as: :next_href, value: :href, with: { rel: 'next' }
-        element :"link", as: :first_href, value: :href, with: { rel: 'first' }
-        element :"link", as: :last_href, value: :href, with: { rel: 'last' }
-      end
+module Feedjira
+  module Parser
+    class Atom
+      element :"link", as: :next_href, value: :href, with: { rel: 'next' }
+      element :"link", as: :first_href, value: :href, with: { rel: 'first' }
+      element :"link", as: :last_href, value: :href, with: { rel: 'last' }
     end
   end
 end
