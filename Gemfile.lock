@@ -33,7 +33,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  cql-rb
-  feedjira
-  httparty
-  persistent_httparty
+  cql-rb (~> 2.0)
+  feedjira (~> 1.6)
+  httparty (~> 0.13)
+  persistent_httparty (~> 0.1)
