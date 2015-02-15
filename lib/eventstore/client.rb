@@ -30,15 +30,13 @@ module EventStore
       [uuid, response]
     end
 
-    def read_events stream, read_until=20
+    def read_events stream, read_count=20
+      resume_read stream, 0, read_count
+    end
+
+    def resume_read stream, last_event_id, read_count=20
       stream = Stream.new url_for stream
-      if read_until.is_a?(Fixnum)
-        stream.events.take(read_until)
-      else
-        stream.events.take_while do |event|
-          event[:id] != read_until
-        end
-      end
+      stream.events_from(last_event_id).take(read_count)
     end
 
     private
@@ -56,25 +54,44 @@ module EventStore
 
     def initialize url
       @page_url = url
+      @id_pointer = url
     end
     def events
+      event_from 0
+    end
+    def events_from event_id, direction=:newer
+      if event_id.is_a?(Fixnum)
+        event_id = "#{@page_url}/#{event_id}"
+      end
+      if direction == :newer
+        @id_pointer = "#{event_id}/forward/20"
+      else
+        @id_pointer = "#{event_id}/backward/20"
+      end
       Enumerator.new do |yielder|
-        while @page_url
-          feed = Feedjira::Feed.parse feed_data
-          feed.entries.each do |entry|
+        while @id_pointer
+          feed = Feedjira::Feed.parse feed_data_from_pointer
+          entries = feed.entries
+          if direction == :newer
+            entries = entries.reverse
+          end
+          entries.each do |entry|
             yielder << { body: fetch_event_body(entry.url),
               type: entry.summary,
               updated: entry.updated,
               id: entry.id
             }
           end
-          @page_url = feed.next_href
+          @id_pointer = entries.length == 0 ? nil : feed.send(direction)
         end
       end
     end
     private
     def feed_data
       self.class.get(@page_url).body
+    end
+    def feed_data_from_pointer
+      self.class.get(@id_pointer).body
     end
     def fetch_event_body url
       JSON.load(
@@ -89,9 +106,11 @@ end
 module Feedjira
   module Parser
     class Atom
-      element :"link", as: :next_href, value: :href, with: { rel: 'next' }
-      element :"link", as: :first_href, value: :href, with: { rel: 'first' }
-      element :"link", as: :last_href, value: :href, with: { rel: 'last' }
+      element :"link", as: :first, value: :href, with: { rel: 'first' }
+      element :"link", as: :last, value: :href, with: { rel: 'last' }
+
+      element :"link", as: :newer, value: :href, with: { rel: 'previous' }
+      element :"link", as: :older, value: :href, with: { rel: 'next' }
     end
   end
 end
