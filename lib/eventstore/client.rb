@@ -48,6 +48,28 @@ module EventStore
     end
   end
 
+  class Util
+    def self.poll eventstore, stream, start_at=0, set_size=100, sleep_time=10
+      Enumerator.new do |yielder|
+        start_at = 0
+        last_start_at = nil
+        begin
+          loop do
+            if last_start_at == start_at
+              sleep sleep_time
+            end
+            last_start_at = start_at
+            events = eventstore.resume_read(stream, start_at, set_size)
+            events.each do |event|
+              yielder << event
+              start_at = event[:id]
+            end
+          end
+        end
+      end
+    end
+  end
+
   class Stream
     include HTTParty
     persistent_connection_adapter
