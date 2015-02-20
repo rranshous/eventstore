@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'eventstore'
-  s.version     = '0.1.2'
+  s.version     = '0.1.3'
   s.summary     = "EventStore HTTP client"
   s.description = "EventStore HTTP client for simple reading and writing"
   s.authors     = ["Robby Ranshous"]

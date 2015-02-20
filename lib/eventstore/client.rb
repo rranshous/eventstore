@@ -59,7 +59,7 @@ module EventStore
               sleep sleep_time
             end
             last_start_at = start_at
-            events = eventstore.resume_read(stream, start_at, set_size)
+            events = eventstore.resume_read(stream, start_at, set_size).drop(1)
             events.each do |event|
               yielder << event
               start_at = event[:id]
