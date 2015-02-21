@@ -7,7 +7,8 @@ require 'persistent_httparty'
 module EventStore
   class Client
     include HTTParty
-    persistent_connection_adapter
+    pool_size = ENV['HTTP_POOL_SIZE'] ? ENV['HTTP_POOL_SIZE'].to_i : 1
+    persistent_connection_adapter({ pool_size: pool_size })
 
     def initialize conn_string
       @conn_string = conn_string
@@ -72,7 +73,8 @@ module EventStore
 
   class Stream
     include HTTParty
-    persistent_connection_adapter
+    pool_size = ENV['HTTP_POOL_SIZE'] ? ENV['HTTP_POOL_SIZE'].to_i : 1
+    persistent_connection_adapter({ pool_size: pool_size })
 
     def initialize url
       @page_url = url
