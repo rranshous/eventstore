@@ -52,7 +52,6 @@ module EventStore
   class Util
     def self.poll eventstore, stream, start_at=0, set_size=100, sleep_time=10
       Enumerator.new do |yielder|
-        start_at = 0
         last_start_at = nil
         begin
           loop do
