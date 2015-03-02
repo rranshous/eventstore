@@ -93,7 +93,9 @@ module EventStore
       end
       Enumerator.new do |yielder|
         while @id_pointer
-          feed = Feedjira::Feed.parse feed_data_from_pointer
+          feed_data = feed_data_from_pointer
+          break if feed_data.chomp == ""
+          feed = Feedjira::Feed.parse feed_data
           entries = feed.entries
           if direction == :newer
             entries = entries.reverse
